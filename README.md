@@ -17,7 +17,7 @@ npm.cmd run deploy
 ```
 
 デプロイ後に表示されたWorkers URLを `pages/index.html` の `WORKER_BASE_URL` に設定してください。
-本番では `worker/wrangler.toml` の `ALLOWED_ORIGINS` をPagesの公開URLへ変更してから再デプロイします。
+本番では `worker/wrangler.toml` の `ALLOWED_ORIGINS` をPagesの公開URLへ変更してから再デプロイします。`compatibility_date` はCloudflareの現在日より未来にしないでください。
 
 ## 動作確認
 
