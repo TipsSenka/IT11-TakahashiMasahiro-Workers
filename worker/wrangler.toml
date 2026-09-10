@@ -1,0 +1,7 @@
+name = "senka-api"
+main = "src/index.js"
+compatibility_date = "2026-09-10"
+
+[vars]
+# 本番ではPagesの公開URLに置き換えてください。複数指定はカンマ区切りです。
+ALLOWED_ORIGINS = "*"
