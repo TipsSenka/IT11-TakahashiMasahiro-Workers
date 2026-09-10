@@ -4,18 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Cloudflare Workers APIを確認するためのPages画面">
-    <title>Workers API Console</title>
+    <title>Workers API探偵事務所</title>
     <style>
         :root {
-            --ink: #182230;
-            --muted: #667085;
-            --paper: #f7f4ed;
-            --panel: #fffdf8;
-            --line: #ded8ca;
-            --coral: #e76145;
-            --coral-dark: #ad3828;
-            --teal: #087f78;
-            --shadow: 0 18px 40px rgb(51 45 35 / 10%);
+            --ink: #20242b;
+            --muted: #77756e;
+            --paper: #eee9dc;
+            --panel: #faf7ee;
+            --line: #c9c0ad;
+            --red: #a52d2b;
+            --red-dark: #79201f;
+            --gold: #b1843f;
+            --blue: #284c61;
         }
 
         * { box-sizing: border-box; }
@@ -23,75 +23,85 @@
         body {
             margin: 0;
             color: var(--ink);
-            background:
-                linear-gradient(125deg, rgb(226 240 234 / 80%), transparent 43%),
-                radial-gradient(circle at 90% 8%, #f5d8b7 0 10%, transparent 31%),
-                var(--paper);
-            font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif;
+            background: linear-gradient(90deg, rgb(66 55 40 / 4%) 1px, transparent 1px), linear-gradient(var(--paper), #e4dece);
+            background-size: 8px 8px, auto;
+            font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
         }
 
         .shell { width: min(1080px, calc(100% - 40px)); margin: 0 auto; }
-        header { padding: 54px 0 34px; display: flex; justify-content: space-between; gap: 24px; align-items: end; }
-        .eyebrow { color: var(--teal); font-size: .76rem; font-weight: 800; letter-spacing: .16em; }
-        h1 { margin: 12px 0 8px; font-family: Georgia, "Times New Roman", serif; font-size: clamp(2.3rem, 6vw, 4.8rem); line-height: .95; letter-spacing: 0; }
-        .lead { max-width: 560px; margin: 0; color: var(--muted); line-height: 1.8; }
-        .status { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: .86rem; white-space: nowrap; }
-        .status::before { width: 10px; height: 10px; border-radius: 50%; background: var(--coral); content: ""; }
-        main { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(320px, .95fr); gap: 24px; padding-bottom: 60px; }
-        .panel { border: 1px solid var(--line); background: rgb(255 253 248 / 88%); box-shadow: var(--shadow); }
-        .controls { padding: 26px; }
-        .panel h2 { margin: 0 0 20px; font-size: 1.15rem; }
+        header { padding: 48px 0 30px; border-bottom: 3px double var(--ink); display: flex; justify-content: space-between; gap: 24px; align-items: end; }
+        .eyebrow { color: var(--red); font-size: .74rem; font-weight: 800; letter-spacing: .2em; }
+        h1 { margin: 10px 0 8px; font-size: clamp(2.5rem, 7vw, 5.8rem); line-height: .9; letter-spacing: .04em; }
+        .lead { max-width: 570px; margin: 0; color: var(--muted); line-height: 1.8; font-family: "Yu Gothic", sans-serif; }
+        .case-stamp { border: 2px solid var(--red); padding: 13px 16px 10px; color: var(--red); transform: rotate(-3deg); text-align: center; font-weight: 800; white-space: nowrap; }
+        .case-stamp small { display: block; font: .7rem "Yu Gothic", sans-serif; letter-spacing: .12em; }
+        main { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr); gap: 28px; padding: 28px 0 48px; }
+        .panel { border-top: 1px solid var(--ink); border-bottom: 1px solid var(--line); background: rgb(250 247 238 / 78%); }
+        .controls { padding: 24px 0; }
+        .panel h2 { margin: 0 0 18px; font-size: 1.25rem; }
+        .section-kicker { color: var(--gold); font: 700 .72rem "Yu Gothic", sans-serif; letter-spacing: .14em; }
         .endpoint-list { display: grid; gap: 10px; }
         button, input { font: inherit; }
-        button { border: 1px solid var(--line); border-radius: 2px; cursor: pointer; }
-        .endpoint { min-height: 58px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; background: var(--panel); color: var(--ink); text-align: left; transition: transform .2s, border-color .2s; }
-        .endpoint:hover { border-color: var(--coral); transform: translateX(4px); }
+        button { border: 1px solid var(--line); border-radius: 0; cursor: pointer; }
+        .endpoint { min-height: 64px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; background: transparent; color: var(--ink); text-align: left; transition: background .2s, padding .2s; }
+        .endpoint:hover { border-color: var(--red); background: rgb(165 45 43 / 8%); padding-left: 22px; }
         .endpoint strong { display: block; font-size: .98rem; }
         .endpoint small { color: var(--muted); }
-        .method { color: var(--teal); font-size: .72rem; font-weight: 800; letter-spacing: .08em; }
+        .method { color: var(--blue); font: 700 .72rem "Yu Gothic", sans-serif; letter-spacing: .08em; }
         form { display: flex; gap: 10px; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--line); }
-        input { min-width: 0; flex: 1; border: 1px solid var(--line); border-radius: 2px; padding: 13px 14px; background: #fff; color: var(--ink); }
-        input:focus { outline: 2px solid rgb(8 127 120 / 24%); border-color: var(--teal); }
-        .primary { padding: 13px 18px; background: var(--coral); color: white; border-color: var(--coral); font-weight: 700; }
-        .primary:hover { background: var(--coral-dark); }
-        .result { min-height: 420px; padding: 26px; background: var(--ink); color: #eef3f0; }
+        input { min-width: 0; flex: 1; border: 1px solid var(--line); border-radius: 0; padding: 13px 14px; background: #fffdf7; color: var(--ink); font-family: inherit; }
+        input:focus { outline: 2px solid rgb(165 45 43 / 24%); border-color: var(--red); }
+        .primary { padding: 13px 18px; background: var(--red); color: white; border-color: var(--red); font-weight: 700; }
+        .primary:hover { background: var(--red-dark); }
+        .result { min-height: 440px; padding: 24px; background: var(--blue); color: #f7f1e3; }
         .result-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
         .result h2 { margin: 0; color: #fff; }
-        #result-meta { color: #9eb7b2; font-size: .78rem; }
-        pre { overflow: auto; min-height: 320px; margin: 0; padding: 20px; background: #101821; color: #bce5c8; font: .86rem/1.7 Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
-        footer { padding: 18px 0 32px; color: var(--muted); font-size: .78rem; }
-        @media (max-width: 760px) { .shell { width: min(100% - 28px, 560px); } header { padding-top: 32px; display: block; } .status { margin-top: 20px; } main { grid-template-columns: 1fr; } .result { min-height: 360px; } pre { min-height: 260px; } }
+        #result-meta { color: #d4c397; font: .75rem "Yu Gothic", sans-serif; }
+        pre { overflow: auto; min-height: 270px; margin: 0; padding: 18px; background: #1b3545; color: #d9e6dc; font: .84rem/1.7 Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
+        .evidence { margin-top: 22px; padding-top: 18px; border-top: 1px solid rgb(255 255 255 / 25%); font-family: "Yu Gothic", sans-serif; }
+        .evidence-title { display: flex; justify-content: space-between; color: #d4c397; font-size: .78rem; }
+        #log { margin: 9px 0 0; padding: 0; color: #d9e6dc; font-size: .78rem; line-height: 1.8; list-style: none; }
+        #log li::before { margin-right: 8px; color: #edc86d; content: "◆"; }
+        .rank { margin-top: 22px; padding: 14px 0 0; border-top: 1px solid var(--line); font-family: "Yu Gothic", sans-serif; }
+        .rank-line { display: flex; justify-content: space-between; font-size: .78rem; }
+        .meter { height: 8px; margin-top: 8px; background: #d6cebd; }
+        .meter span { display: block; width: 0; height: 100%; background: var(--red); transition: width .4s ease; }
+        footer { padding: 18px 0 32px; color: var(--muted); font: .78rem "Yu Gothic", sans-serif; }
+        @media (max-width: 760px) { .shell { width: min(100% - 28px, 560px); } header { padding-top: 32px; display: block; } .case-stamp { display: inline-block; margin-top: 22px; } main { grid-template-columns: 1fr; gap: 22px; } .result { min-height: 360px; } pre { min-height: 220px; } }
     </style>
 </head>
 <body>
     <div class="shell">
         <header>
             <div>
-                <div class="eyebrow">CLOUDFLARE / PAGES × WORKERS</div>
-                <h1>Workers<br>API Console</h1>
-                <p class="lead">PagesからWorker APIへ接続し、レスポンスをその場で確認できます。各エンドポイントはJSONで応答します。</p>
+                <div class="eyebrow">CLOUDFLARE / SPECIAL INVESTIGATION UNIT</div>
+                <h1>Workers API<br>探偵事務所</h1>
+                <p class="lead">失踪したJSONを追え。PagesからWorkerへ聞き込みを行い、返ってきたレスポンスを証拠品として記録します。</p>
             </div>
-            <div class="status">API接続テスト ready</div>
+            <div class="case-stamp"><small>CASE FILE</small>NO. 404-200</div>
         </header>
 
         <main>
             <section class="panel controls" aria-labelledby="controls-title">
-                <h2 id="controls-title">エンドポイントを選択</h2>
+                <div class="section-kicker">捜査本部 / INVESTIGATION DESK</div>
+                <h2 id="controls-title">聞き込み先を選ぶ</h2>
                 <div class="endpoint-list">
-                    <button class="endpoint" data-path="/api" type="button"><span><strong>API status</strong><small>Workerの稼働状態</small></span><span class="method">GET /api</span></button>
-                    <button class="endpoint" data-path="/api/course" type="button"><span><strong>Course</strong><small>学習コースの概要</small></span><span class="method">GET /api/course</span></button>
-                    <button class="endpoint" data-path="/api/fortune" type="button"><span><strong>Fortune</strong><small>今日の運勢を取得</small></span><span class="method">GET /api/fortune</span></button>
-                    <button class="endpoint" data-path="/api/events" type="button"><span><strong>Events</strong><small>イベント一覧</small></span><span class="method">GET /api/events</span></button>
+                    <button class="endpoint" data-path="/api" type="button"><span><strong>01 / 稼働確認</strong><small>Workerが事件を受理できるか</small></span><span class="method">GET /api</span></button>
+                    <button class="endpoint" data-path="/api/course" type="button"><span><strong>02 / 捜査資料</strong><small>Cloudflareの基礎資料を照会</small></span><span class="method">GET /api/course</span></button>
+                    <button class="endpoint" data-path="/api/fortune" type="button"><span><strong>03 / 占い師の証言</strong><small>今日の捜査運を取得</small></span><span class="method">GET /api/fortune</span></button>
+                    <button class="endpoint" data-path="/api/events" type="button"><span><strong>04 / 目撃情報</strong><small>今後のイベントを照会</small></span><span class="method">GET /api/events</span></button>
                 </div>
                 <form id="hello-form">
                     <input id="name" name="name" maxlength="50" autocomplete="off" placeholder="名前を入力（例：山田）" aria-label="名前">
-                    <button class="primary" type="submit">Helloを送信</button>
+                    <button class="primary" type="submit">聞き込み開始</button>
                 </form>
             </section>
 
             <section class="panel result" aria-live="polite" aria-labelledby="result-title">
-                <div class="result-heading"><h2 id="result-title">Response</h2><span id="result-meta">未実行</span></div>
-                <pre id="result">左のボタンからAPIを選択してください。</pre>
+                <div class="result-heading"><h2 id="result-title">証拠品保管庫</h2><span id="result-meta">捜査前</span></div>
+                <pre id="result">左の捜査メニューから聞き込み先を選択してください。</pre>
+                <div class="evidence"><div class="evidence-title"><span>捜査ログ</span><span id="evidence-count">0 / 5</span></div><ul id="log"><li>事件ファイルを開きました</li></ul></div>
+                <div class="rank"><div class="rank-line"><span>捜査ランク</span><strong id="rank-label">見習い探偵</strong></div><div class="meter"><span id="meter"></span></div></div>
             </section>
         </main>
         <footer>接続先: <span id="base-url"></span></footer>
@@ -103,6 +113,22 @@
         const result = document.querySelector("#result");
         const resultMeta = document.querySelector("#result-meta");
         document.querySelector("#base-url").textContent = WORKER_BASE_URL;
+        const log = document.querySelector("#log");
+        const evidenceCount = document.querySelector("#evidence-count");
+        const meter = document.querySelector("#meter");
+        const rankLabel = document.querySelector("#rank-label");
+        const investigated = new Set();
+
+        function addEvidence(path, status) {
+            if (investigated.has(path)) return;
+            investigated.add(path);
+            const item = document.createElement("li");
+            item.textContent = `${path} の証拠品を確保（${status}）`;
+            log.prepend(item);
+            evidenceCount.textContent = `${investigated.size} / 5`;
+            if (meter) meter.style.width = `${Math.min(investigated.size / 5 * 100, 100)}%`;
+            if (rankLabel) rankLabel.textContent = investigated.size >= 5 ? "名探偵" : investigated.size >= 3 ? "一人前の探偵" : "見習い探偵";
+        }
 
         async function callApi(path) {
             result.textContent = "通信中...";
@@ -112,9 +138,10 @@
                 const data = await response.json();
                 result.textContent = JSON.stringify(data, null, 2);
                 resultMeta.textContent = `${response.status} ${response.statusText} / ${path}`;
+                addEvidence(path, response.status);
             } catch (error) {
                 result.textContent = JSON.stringify({ error: "APIに接続できませんでした", detail: error.message }, null, 2);
-                resultMeta.textContent = "接続エラー";
+                resultMeta.textContent = "接続エラー / 捜査中断";
             }
         }
 
